@@ -1,0 +1,2 @@
+# SPOP
+Functional programming project
