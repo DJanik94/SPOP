@@ -3,10 +3,20 @@ import System.IO
 import System.IO.Error
 import Control.Exception
 
+
 import PuzzleTableType
+import PuzzleSolver
 
+{- TODO:
+-przeszukiwanie slow
+	- pierwszy krok: szukanie w poziomie
+- rozwazyc wywolanie inicjalizacji tablicy stanu do solvera zeby nie importowac 
+- sprobowac wywalic zbedne funckje, ktore mozna zastapic map
+- posortowac slowa od nadluzszego do najkrotszego aby zapobiec sytuacji znalezienia slowa bedacego częścią innego słowa z listy w miejscu gdzie powinno zostac wykreslone to dluższe (np. BROOM i BROOMSTICK) - albo odwrtotnie, w zależności od kolejności pobierania elemntów z listy słów
+- w wyjsciu dodac liste nieznalezionych słów
+- rozważyć stosowanie wyłącznie ByteStringów
 
-		
+-}
 --zbior mozliwych bledow pliku
 fileError :: IOError -> Bool
 fileError e = isDoesNotExistError e || isAlreadyInUseError e || isPermissionError e || isEOFError e
@@ -19,7 +29,7 @@ defaultPath2 = "input_data/1_words.txt"
 --to też do smieci
 
 -- tu się zaczyna zabawa
-loadAndProceed tableFiLeName wordlistFileName  = catch
+loadAndSolve tableFiLeName wordlistFileName  = catch
 	( do 
 				handle <- openFile tableFiLeName ReadMode
 				table <- hGetContents handle
@@ -31,6 +41,7 @@ loadAndProceed tableFiLeName wordlistFileName  = catch
 				words <- hGetContents handle
 				putStrLn words
 				let wordlist = lines words
+				let clearWordlist = map clearWord wordlist
 				hClose handle
 	) errorHandler
 			where
@@ -42,16 +53,24 @@ main = puzzle
 -- głowna funkcja
 puzzle :: IO()
 puzzle = do
-  putStrLn "Wpisz Nazwe pliku z tablica, \"d\" aby wczytac domyslna konfiugracja lub \"q\" aby wyjsc:"
+  putStrLn "Podaj sicezke pliku z tablica, \"d\" aby wczytac domyslna konfiugracja lub \"q\" aby wyjsc:"
   line1 <- getLine
   case line1 of
     ['q'] -> return ()
     ['d']  -> do
 				putStrLn "dd"  
-				loadAndProceed defaultPath1 defaultPath2
+				loadAndSolve defaultPath1 defaultPath2
 				puzzle
     path1 -> do
-				putStrLn "Wpisz Nazwe pliku z lista slow"  
+				putStrLn "Podaj sciezke pliku z lista slow"  
 				path2 <- getLine
-				loadAndProceed path1 path2
+				loadAndSolve path1 path2
 				puzzle
+
+				
+-- TESTY
+sampleTable = initializeRows ["ABCABC", "DEFGHXY", "IJKLMN"]
+sampleRow = sampleTable !! 0
+sampleWordList = ["C", "ABCA","XY"]
+resultTest = lookForWordsInSingleRow (sampleRow, sampleWordList)
+r11 = solveHorizontally (sampleTable, sampleWordList)
