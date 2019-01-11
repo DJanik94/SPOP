@@ -15,12 +15,12 @@ crossLetter (letter, state)	| state == True = '-'
 							| otherwise = letter
 
 --przepisanie tablicy znaków do tablicy par (znak, stan)
-initializePuzzleTable :: String -> [[(Char, Bool)]]
+initializePuzzleTable :: String -> PuzzleTable
 initializePuzzleTable [] = []
 initializePuzzleTable table = initializeRows (lines table)
 
 --inicjalizacja pojednyczego wiersza tabeli to postaci (znak, stan)
-initializeRows :: [String] -> [[(Char, Bool)]]
+initializeRows :: [String] -> PuzzleTable
 initializeRows [] = []
 initializeRows (x:xs) = [createRow x] ++ initializeRows xs
 
@@ -48,4 +48,4 @@ puzzleTableToString (x:xs) = (rowToString x) ++['\n'] ++ puzzleTableToString xs
 					where
 						rowToString :: [(Char, Bool)] -> String
 						rowToString [] = []
-						rowToString (y:ys) = (map crossLetter x) ++ rowToString ys
+						rowToString (y:ys) = (map crossLetter [y]) ++ rowToString ys

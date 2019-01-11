@@ -15,7 +15,10 @@ import PuzzleSolver
 - posortowac slowa od nadluzszego do najkrotszego aby zapobiec sytuacji znalezienia slowa bedacego częścią innego słowa z listy w miejscu gdzie powinno zostac wykreslone to dluższe (np. BROOM i BROOMSTICK) - albo odwrtotnie, w zależności od kolejności pobierania elemntów z listy słów
 - w wyjsciu dodac liste nieznalezionych słów
 - rozważyć stosowanie wyłącznie ByteStringów
-
+- naprawić bug: zawsze szuka tylko pierwszego wystapinia np. dla sampleTable = initializeRows ["ABCABC", "DEFGHXY", "IJKLMN"]
+sampleRow = sampleTable !! 0
+sampleWordList = ["C", "ABCA","XY"] skersli tylko pierwsze wystapienia poszczegolnych słów
+- soznaczana jest o jedna litera za wczesnie
 -}
 --zbior mozliwych bledow pliku
 fileError :: IOError -> Bool
@@ -35,14 +38,15 @@ loadAndSolve tableFiLeName wordlistFileName  = catch
 				table <- hGetContents handle
 				putStrLn  table
 				putStrLn  " "
-				let puzzleTable = initializePuzzleTable table
+				--let puzzleTable = initializePuzzleTable table
 				hClose handle
 				handle <- openFile wordlistFileName ReadMode
 				words <- hGetContents handle
 				putStrLn words
-				let wordlist = lines words
-				let clearWordlist = map clearWord wordlist
+				--let wordlist = lines words
+				--let clearWordlist = map clearWord wordlist
 				hClose handle
+				putStrLn (solve table words)
 	) errorHandler
 			where
 				    errorHandler e =
@@ -58,7 +62,7 @@ puzzle = do
   case line1 of
     ['q'] -> return ()
     ['d']  -> do
-				putStrLn "dd"  
+				putStrLn "d"  
 				loadAndSolve defaultPath1 defaultPath2
 				puzzle
     path1 -> do
@@ -71,6 +75,8 @@ puzzle = do
 -- TESTY
 sampleTable = initializeRows ["ABCABC", "DEFGHXY", "IJKLMN"]
 sampleRow = sampleTable !! 0
-sampleWordList = ["C", "ABCA","XY"]
+sampleWordList = ["C","XY", "EGFH", "TY", "IJK", "A", "BXM"]
 resultTest = lookForWordsInSingleRow (sampleRow, sampleWordList)
 r11 = solveHorizontally (sampleTable, sampleWordList)
+r10 = putStrLn ("ABCABC"++['\n']++"DEFGHXY"++['\n']++"IJKLMN")
+r12 = putStrLn (puzzleTableToString (fst r11))

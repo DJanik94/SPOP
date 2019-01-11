@@ -12,9 +12,16 @@ solutionToString [] = []
 solutionToString (x:xs) = x ++ ['\n'] ++ solutionToString xs
 
 --główna funckcja
---solve :: [[(Char, Bool)]] -> [String] -> [String]
---solve table list = solveHorizontally table list
-
+--solve :: [[(Char, Bool)]] -> [String] -> String
+solve :: String -> String -> String
+solve tableString listString = do 
+									let	table = initializePuzzleTable tableString
+									let wordlist = DL.map clearWord (lines listString)
+									let stage1 = solveHorizontally (table, wordlist)
+									--stage2 = solveVertically stage1
+									puzzleTableToString (fst stage1)
+						
+						
 showRemainigLetters :: PuzzleTable -> [String]
 showRemainigLetters [] = []
 showRemainigLetters (x:xs) = [showRemainigLettersInRow x] ++ showRemainigLetters xs
@@ -34,7 +41,7 @@ markWord :: [(Char, Bool)] -> Int -> Int -> [(Char, Bool)]
 markWord word _ 0 = word --zwrocic uwage na to czy wykreslane zostaja wsztskie znaki, ktore maja byc wykreslone
 -- markWord [] _ _ - tu chyba mozna rzucic jakis wyjatek
 markWord (x:xs) 0 n = [markLetter x] ++ markWord xs 0 (n-1)
-markWord word s n = (DL.take (s-1) word) ++ (markWord (DL.drop (s-1) word) 0 n) 
+markWord word s n = (DL.take (s) word) ++  (markWord (DL.drop (s) word) 0 n) 
 
 --przeszukiwanie w poziomie
 solveHorizontally :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
