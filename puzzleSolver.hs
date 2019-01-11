@@ -6,6 +6,7 @@ import qualified Data.ByteString.Char8 as C
 import Data.Maybe
 import Data.ByteString as BS
 
+
 --konwersja rezultatu do pojedynczego stringa
 solutionToString :: [String] -> String
 solutionToString [] = []
@@ -18,8 +19,11 @@ solve tableString listString = do
 									let	table = initializePuzzleTable tableString
 									let wordlist = DL.map clearWord (lines listString)
 									let stage1 = solveHorizontally (table, wordlist)
-									--stage2 = solveVertically stage1
-									puzzleTableToString (fst stage1)
+									let stage2 = solveVertically stage1
+									let stage3 = solveDiagonallyUp stage2
+									let stage4 = solveDiagonallyDown stage3
+									puzzleTableToString (fst stage4)
+									--solutionToString (snd stage2)
 						
 						
 showRemainigLetters :: PuzzleTable -> [String]
@@ -43,16 +47,72 @@ markWord word _ 0 = word --zwrocic uwage na to czy wykreslane zostaja wsztskie z
 markWord (x:xs) 0 n = [markLetter x] ++ markWord xs 0 (n-1)
 markWord word s n = (DL.take (s) word) ++  (markWord (DL.drop (s) word) 0 n) 
 
---przeszukiwanie w poziomie
+--Wykreślanie w poziomie
 solveHorizontally :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
 -- po przeszukaniu calego stanu
 solveHorizontally ([], wordlist) = ([], wordlist)
--- przerwac gdy lista slow jest pusta -zle chyba
---solveHorizontally (row, []) = (row, [])
 solveHorizontally ((x:xs), wordlist) = do
 										let next = solveHorizontally (xs, wordlist)
 										let state = lookForWordsInSingleRow (x, (snd next))
 										([(fst state)]++(fst next), (snd state))
+
+--Wykreślanie w pionie									
+solveVertically  :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
+solveVertically (table, list) = do 
+									let transTable = DL.transpose table
+									let transResult = solveHorizontally (transTable, list)
+									((DL.transpose (fst transResult)), (snd transResult)) 
+
+--Wykreślanie po przekątnej w górę
+solveDiagonallyUp :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
+solveDiagonallyUp (table, list) =	let 
+										rowsNum = DL.length table
+										columnsNum = DL.length (DL.head table)
+										diagTable = diagonalsUpper table
+										result = solveHorizontally (diagTable, list)
+									in ((restoreFromDiagonals (fst result) rowsNum columnsNum), (snd result))
+
+--									
+solveDiagonallyDown :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
+solveDiagonallyDown (table, list) =	let 
+										rowsNum = DL.length table
+										columnsNum = DL.length (DL.head table)
+										diagTable = diagonalsUpper (DL.reverse table)
+										result = solveHorizontally (diagTable, list)
+									in ((DL.reverse (restoreFromDiagonals (fst result) rowsNum columnsNum)), (snd result))
+										
+										
+-- trzeba to zrefaktoryzowac
+--diagonalsUpper :: [a] -> [a]
+diagonalsUpper [] = []
+diagonalsUpper ([]:xs) = xs
+diagonalsUpper xs = DL.zipWith (++) (DL.map ((:[]).DL.head) xs ++ repeat []) ([]:(diagonalsUpper (DL.map DL.tail xs)))
+
+
+-- funkcja związana z odtwarzaniem tablicy z przekątnych - odtworzenie pojedynczego wiersza
+restoreRow :: [[a]] -> Int -> [a]
+restoreRow list 0 = []
+restoreRow ([]:xs) n = restoreRow xs n
+--restoreRow ([x]:xs) n = [x] ++ restoreRow xs (n-1)
+restoreRow (x:xs) n = [(DL.last x)] ++ restoreRow xs (n-1)
+
+-- funkcja związana z odtwarzaniem tablicy z przekątnych - usunięcie odtworzonego wiersza
+deleteLasts :: [[a]] -> Int -> [[a]]
+deleteLasts [] _ = []
+deleteLasts list 0 = list
+deleteLasts ([]:xs) n =  deleteLasts xs n
+deleteLasts (x:xs) n = [(DL.init x)] ++ (deleteLasts xs (n-1))
+
+--wejścia: tablica, liczba wierszy, liczba kolumn
+restoreFromDiagonals :: [[a]] -> Int -> Int -> [[a]]
+restoreFromDiagonals [] k n = []
+restoreFromDiagonals (x:xs) 1 n = [restoreRow (x:xs) n]
+restoreFromDiagonals (x:xs) k n =	let 
+								newRow = restoreRow (x:xs) n
+								(y:ys) = deleteLasts (x:xs) n
+							in [newRow] ++ restoreFromDiagonals ys (k-1) n
+							
+
 
 {-
 --może być niepotrzebne, bo jest potężny findSubString

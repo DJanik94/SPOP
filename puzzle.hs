@@ -73,10 +73,22 @@ puzzle = do
 
 				
 -- TESTY
-sampleTable = initializeRows ["ABCABC", "DEFGHXY", "IJKLMN"]
+sampleInput = ["ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN"]
+sampleInput1 = ["123456", "789ABC","DEFGHI", "JKMNOP"]
+sampleTable = initializeRows sampleInput
 sampleRow = sampleTable !! 0
 sampleWordList = ["C","XY", "EGFH", "TY", "IJK", "A", "BXM"]
 resultTest = lookForWordsInSingleRow (sampleRow, sampleWordList)
 r11 = solveHorizontally (sampleTable, sampleWordList)
 r10 = putStrLn ("ABCABC"++['\n']++"DEFGHXY"++['\n']++"IJKLMN")
 r12 = putStrLn (puzzleTableToString (fst r11))
+
+
+								  
+rXX = diagonalsUpper sampleInput
+
+rXXX = reverse rXX
+
+rXXXX = diagonalsUpper rXXX
+
+
