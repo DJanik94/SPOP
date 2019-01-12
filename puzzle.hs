@@ -63,7 +63,7 @@ puzzle = do
                 loadAndSolve path1 path2
                 puzzle
 
-                
+  {-}              
 -- TESTY
 sampleInput = ["ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN"]
 sampleInput1 = ["123456", "789ABC","DEFGHI", "JKMNOP"]
@@ -84,3 +84,4 @@ rXXX = reverse rXX
 rXXXX = diagonalsUpper rXXX
 
 
+-}

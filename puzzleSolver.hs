@@ -17,11 +17,11 @@ solve :: String -> String -> String
 solve tableString listString = let
                                     table = initializePuzzleTable tableString
                                     wordlist = DL.map clearWord (lines listString)
-                                    stage1 = solveHorizontally (table, wordlist)
-                                    stage2 = solveVertically stage1 
-                                    stage3 = solveDiagonallyUp stage2
-                                    stage4 = solveDiagonallyDown stage3 
-                                in puzzleTableToString (fst stage4)
+                                    stage1 = solveHorizontally table wordlist
+                                    stage2 = solveVertically stage1 wordlist
+                                    stage3 = solveDiagonallyUp stage2 wordlist
+                                    stage4 = solveDiagonallyDown stage3 wordlist
+                                in puzzleTableToString stage4
                                     --solutionToString (snd stage4)
                         
                         
@@ -41,42 +41,42 @@ markLetter (ch, s) = (ch, True)
 
 --oznaczenie znakow w tablicy w przypadku znalezienia słowa argumenty: lista par (znak, stan), indeks poczatkowy, liczba znaków do oznaczenia
 markWord :: [(Char, Bool)] -> Int -> Int -> [(Char, Bool)]
-markWord word _ 0 = word 
+markWord word _ 0 = word
 markWord (x:xs) 0 n = [markLetter x] ++ markWord xs 0 (n-1)
-markWord word s n = (DL.take (s) word) ++  (markWord (DL.drop (s) word) 0 n) 
+markWord word s n = (DL.take (s) word) ++(markWord (DL.drop(s) word) 0 n) 
 
 --Wykreślanie w poziomie
-solveHorizontally :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
-solveHorizontally ([], wordlist) = ([], wordlist)
-solveHorizontally ((x:xs), wordlist) = let
-                                        next = solveHorizontally (xs, wordlist)
-                                        state = lookForWordsInSingleRow (x, (snd next))
-                                    in ([(fst state)]++(fst next), (snd state))
+solveHorizontally :: PuzzleTable -> [String] -> PuzzleTable
+solveHorizontally [] wordList = []
+solveHorizontally (x:xs) wordList = let
+                                        next = solveHorizontally xs wordList
+                                        state = lookForWordsInSingleRow x wordList
+                                    in [state]++next
 
 --Wykreślanie w pionie                                  
-solveVertically  :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
-solveVertically (table, list) = let
+solveVertically  :: PuzzleTable -> [String] -> PuzzleTable
+solveVertically table wordList = let
                                     transTable = DL.transpose table
-                                    transResult = solveHorizontally (transTable, list)
-                                in ((DL.transpose (fst transResult)), (snd transResult)) 
+                                    transResult = solveHorizontally transTable wordList
+                                in DL.transpose transResult 
 
 --Wykreślanie po przekątnej w górę
-solveDiagonallyUp :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
-solveDiagonallyUp (table, list) =   let 
+solveDiagonallyUp :: PuzzleTable -> [String] -> PuzzleTable
+solveDiagonallyUp table wordList =   let 
                                         rowsNum = DL.length table
                                         columnsNum = DL.length (DL.head table)
                                         diagTable = diagonalsUpper table
-                                        result = solveHorizontally (diagTable, list)
-                                    in ((restoreFromDiagonals (fst result) rowsNum columnsNum), (snd result))
+                                        result = solveHorizontally diagTable wordList
+                                    in restoreFromDiagonals result rowsNum columnsNum
 
 -- Wykreślanie po przekątnej w dół                               
-solveDiagonallyDown :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
-solveDiagonallyDown (table, list) = let 
+solveDiagonallyDown :: PuzzleTable -> [String] -> PuzzleTable
+solveDiagonallyDown table wordList = let 
                                         rowsNum = DL.length table
                                         columnsNum = DL.length (DL.head table)
                                         diagTable = diagonalsUpper (DL.reverse table)
-                                        result = solveHorizontally (diagTable, list)
-                                    in ((DL.reverse (restoreFromDiagonals (fst result) rowsNum columnsNum)), (snd result))
+                                        result = solveHorizontally diagTable wordList
+                                    in DL.reverse (restoreFromDiagonals result rowsNum columnsNum)
                                         
                                         
 -- Funkcja zwracjająca listę przekątnych
@@ -114,21 +114,19 @@ checkWord :: [(Char, Bool)] -> String -> Maybe Int
 checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
 
 -- Szukanie słowa w pojedynczej linii
-lookForSinleWordInSingleRow :: [(Char, Bool)] -> String -> ([(Char, Bool)], [String])
-lookForSinleWordInSingleRow row [] = (row, []) --chyba zbędne
-lookForSinleWordInSingleRow row word    | checkWord row word == Nothing = (row, [word])
-                            | otherwise = ((markWord row (fromJust (checkWord row word)) (DL.length word)), [])
+lookForSinleWordInSingleRow :: [(Char, Bool)] -> String -> [(Char, Bool)]
+lookForSinleWordInSingleRow row [] = row --chyba zbędne
+lookForSinleWordInSingleRow row word    | checkWord row word == Nothing = row
+                                        | otherwise = markWord row (fromJust (checkWord row word)) (DL.length word)
 
 -- Szukanie słów w pojedynczej linii
-lookForWordsInSingleRow :: ([(Char, Bool)], [String]) -> ([(Char, Bool)], [String])
-lookForWordsInSingleRow (row, []) = (row, [])   
-lookForWordsInSingleRow (row, [x]) =    let 
-                                            state = lookForSinleWordInSingleRow row x
-                                        in ((fst state), (snd state))  --to i tak wywola sie dwa razy (chyba)
-lookForWordsInSingleRow (row, (x:xs)) = let  
-                                            next = lookForWordsInSingleRow (row, xs) 
-                                            state = lookForSinleWordInSingleRow (fst next) x
-                                        in ((fst state), (snd next)++(snd state))  --to i tak wywola sie dwa razy (chyba)
+lookForWordsInSingleRow :: [(Char, Bool)] -> [String] -> [(Char, Bool)]
+lookForWordsInSingleRow row [] = row   
+lookForWordsInSingleRow row [x] = lookForSinleWordInSingleRow row x
+lookForWordsInSingleRow row (x:xs) = let  
+                                        next = lookForWordsInSingleRow row xs 
+                                        state = lookForSinleWordInSingleRow next x
+                                        in state
 
                                     
 
