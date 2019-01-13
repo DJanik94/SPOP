@@ -21,8 +21,8 @@ solve tableString listString = let
                                     stage2 = solveVertically stage1 
                                     stage3 = solveDiagonallyUp stage2
                                     stage4 = solveDiagonallyDown stage3 
-                                in puzzleTableToString (fst stage4)
-                                    --solutionToString (snd stage4)
+                                --in puzzleTableToString (fst stage4)
+                                in solutionToString (snd stage4)
                         
                         
 showRemainigLetters :: PuzzleTable -> [String]
@@ -109,15 +109,12 @@ restoreFromDiagonals (x:xs) k n =   let
                                     in [newRow] ++ restoreFromDiagonals ys (k-1) n
                             
 
--- Poszukiwanie słowa w danej linii
-checkWord :: [(Char, Bool)] -> String -> Maybe Int
-checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
 
 -- Szukanie słowa w pojedynczej linii
 lookForSinleWordInSingleRow :: [(Char, Bool)] -> String -> ([(Char, Bool)], [String])
 lookForSinleWordInSingleRow row [] = (row, []) --chyba zbędne
-lookForSinleWordInSingleRow row word    | checkWord row word == Nothing = (row, [word])
-                            | otherwise = ((markWord row (fromJust (checkWord row word)) (DL.length word)), [])
+lookForSinleWordInSingleRow row word    | checkWord' row word 0 == -1 = (row, [word])
+										| otherwise = ((markWord row {-(fromJust-} (checkWord' row word 0){-)-} (DL.length word)), [])
 
 -- Szukanie słów w pojedynczej linii
 lookForWordsInSingleRow :: ([(Char, Bool)], [String]) -> ([(Char, Bool)], [String])
@@ -131,5 +128,29 @@ lookForWordsInSingleRow (row, (x:xs)) = let
                                         in ((fst state), (snd next)++(snd state))  --to i tak wywola sie dwa razy (chyba)
 
                                     
+-- Poszukiwanie słowa w danej linii
+{-checkWord :: [(Char, Bool)] -> String -> Maybe Int
+--checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
+checkWord [] _ = Nothing
+checkWord (l:ls) (w:ws)	| DL.length (w:ws) > DL.length (l:ls) = Nothing
+						| otherwise = Just 1 --XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-}
 
-                        
+
+equalStrings :: [(Char, Bool)] -> String -> Bool
+equalStrings [] _ = False
+equalStrings _ [] = False
+equalStrings [(ch, s)] [w] = (ch == w)
+equalStrings ((ch, s) : ls) (w:ws) = (ch == w) && equalStrings ls ws 
+
+alreadyCrossed :: [(Char, Bool)] -> Bool
+alreadyCrossed [] = False
+alreadyCrossed [(ch, s)] = s
+alreadyCrossed ((ch, s) : ls) = s  && alreadyCrossed ls             
+
+-- Poszukiwanie słowa w danej linii
+checkWord' :: [(Char, Bool)] -> String -> Int -> Int
+--checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
+checkWord' [] _  _= -1
+checkWord' (l:ls) word n	| DL.length word > DL.length (l:ls) = -1
+							| (equalStrings (DL.take (DL.length word) (l:ls)) word) && not(alreadyCrossed (DL.take (DL.length word) (l:ls))) == True = n
+							| otherwise = checkWord' ls word (n+1)
