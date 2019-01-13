@@ -65,7 +65,7 @@ puzzle = do
 
                 
 -- TESTY
-sampleInput = ["ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN", "ABCABC", "DEFGHX", "IJKLMN"]
+sampleInput = ["A", "DE", "IJK", "ABCA", "DEFGH", "IJKLMN", "ABCAB", "DEFG", "IJK", "AB", "D", "IJ"]
 sampleInput1 = ["123456", "789ABC","DEFGHI", "JKMNOP"]
 sampleTable = initializeRows sampleInput
 sampleRow = sampleTable !! 0
