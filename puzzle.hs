@@ -38,6 +38,7 @@ loadAndSolve tableFiLeName wordlistFileName  = catch
                 words <- hGetContents handle
                 putStrLn words
                 hClose handle
+				{-let action = if checkTableIntegrity (lines table) then putStrLn (solve table words) else putStrLn "Zly format tablicy" -}
                 putStrLn (solve table words)
     ) errorHandler
             where
@@ -63,6 +64,12 @@ puzzle = do
                 loadAndSolve path1 path2
                 puzzle
 
+				
+checkTableIntegrity :: [String] -> Bool
+checkTableIntegrity [] = False
+checkTableIntegrity (x:xs) = let
+								lengths = map length xs
+							in (length x) == (maximum lengths) && (length x) == (minimum lengths)
                 
 -- TESTY
 sampleInput = ["A", "DE", "IJK", "ABCA", "DEFGH", "IJKLMN", "ABCAB", "DEFG", "IJK", "AB", "D", "IJ"]
