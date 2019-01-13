@@ -2,9 +2,9 @@ module PuzzleSolver where
 
 import Data.List as DL
 import PuzzleTableType
-import qualified Data.ByteString.Char8 as C
+--import qualified Data.ByteString.Char8 as C
 import Data.Maybe
-import Data.ByteString as BS
+--import Data.ByteString as BS
 
 
 --konwersja rezultatu do pojedynczego stringa
@@ -16,13 +16,13 @@ solutionToString (x:xs) = x ++ ['\n'] ++ solutionToString xs
 solve :: String -> String -> String
 solve tableString listString = let
                                     table = initializePuzzleTable tableString
-                                    wordlist = DL.map clearWord (lines listString)
+                                    wordlist = sortByLength (DL.map clearWord (lines listString))
                                     stage1 = solveHorizontally (table, wordlist)
                                     stage2 = solveVertically stage1 
                                     stage3 = solveDiagonallyUp stage2
                                     stage4 = solveDiagonallyDown stage3 
-                                --in puzzleTableToString (fst stage4)
-                                in solutionToString (snd stage4)
+                                in puzzleTableToString (fst stage4)
+                                --in solutionToString (snd stage4)
                         
                         
 showRemainigLetters :: PuzzleTable -> [String]
@@ -128,12 +128,6 @@ lookForWordsInSingleRow (row, (x:xs)) = let
                                         in ((fst state), (snd next)++(snd state))  --to i tak wywola sie dwa razy (chyba)
 
                                     
--- Poszukiwanie słowa w danej linii
-{-checkWord :: [(Char, Bool)] -> String -> Maybe Int
---checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
-checkWord [] _ = Nothing
-checkWord (l:ls) (w:ws)	| DL.length (w:ws) > DL.length (l:ls) = Nothing
-						| otherwise = Just 1 --XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-}
 
 
 equalStrings :: [(Char, Bool)] -> String -> Bool
@@ -149,8 +143,16 @@ alreadyCrossed ((ch, s) : ls) = s  && alreadyCrossed ls
 
 -- Poszukiwanie słowa w danej linii
 checkWord' :: [(Char, Bool)] -> String -> Int -> Int
---checkWord row word = BS.findSubstring (C.pack word) (C.pack (tableRowToString row))
 checkWord' [] _  _= -1
 checkWord' (l:ls) word n	| DL.length word > DL.length (l:ls) = -1
 							| (equalStrings (DL.take (DL.length word) (l:ls)) word) && not(alreadyCrossed (DL.take (DL.length word) (l:ls))) == True = n
 							| otherwise = checkWord' ls word (n+1)
+							
+							
+						
+-- Sortowanie lsity słow względem długości
+sortByLength :: [[a]] -> [[a]]
+sortByLength [] = []
+sortByLength (x:xs) = sortByLength (DL.filter (\xs-> DL.length xs < DL.length x ) xs) ++ [x] ++ sortByLength (DL.filter (\xs-> DL.length xs >= DL.length x ) xs)
+
+
