@@ -2,9 +2,7 @@ module PuzzleSolver where
 
 import Data.List as DL
 import PuzzleTableType
---import qualified Data.ByteString.Char8 as C
 import Data.Maybe
---import Data.ByteString as BS
 
 
 --konwersja rezultatu do pojedynczego stringa
@@ -14,15 +12,16 @@ solutionToString (x:xs) = x ++ ['\n'] ++ solutionToString xs
 
 --główna funckcja
 solve :: String -> String -> String
-solve tableString listString = let
-                                    table = initializePuzzleTable tableString
-                                    wordlist = sortByLength (DL.map clearWord (lines listString))
-                                    stage1 = solveHorizontally (table, wordlist)
-                                    stage2 = solveVertically stage1 
-                                    stage3 = solveDiagonallyUp stage2
-                                    stage4 = solveDiagonallyDown stage3 
-                                in puzzleTableToString (fst stage4)
-                                --in solutionToString (snd stage4)
+solve tableString listString    | checkTableIntegrity (lines tableString) == False = "Zly format tablicy"
+                                | otherwise = let
+                                                table = initializePuzzleTable tableString
+                                                wordlist = sortByLength (DL.map clearWord (lines listString))
+                                                stage1 = solveHorizontally (table, wordlist)
+                                                stage2 = solveVertically stage1 
+                                                stage3 = solveDiagonallyUp stage2
+                                                stage4 = solveDiagonallyDown stage3 
+                                            in puzzleTableToString (fst stage4)
+                                            --in solutionToString (snd stage4)
                         
                         
 showRemainigLetters :: PuzzleTable -> [String]
@@ -48,10 +47,10 @@ markWord word s n = (DL.take (s) word) ++  (markWord (DL.drop (s) word) 0 n)
 --Wykreślanie w poziomie
 solveHorizontally :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
 solveHorizontally ([], wordlist) = ([], wordlist)
-solveHorizontally ((x:xs), wordlist) = let
-                                        next = solveHorizontally (xs, wordlist)
-                                        state = lookForWordsInSingleRow (x, (snd next))
-                                    in ([(fst state)]++(fst next), (snd state))
+solveHorizontally ((x:xs), wordlist) = do
+                                       let next = solveHorizontally (xs, wordlist)
+                                       let state = lookForWordsInSingleRow (x, (snd next))
+                                       ([(fst state)]++(fst next), (snd state))
 
 --Wykreślanie w pionie                                  
 solveVertically  :: (PuzzleTable, [String]) -> (PuzzleTable, [String])
@@ -83,9 +82,11 @@ solveDiagonallyDown (table, list) = let
 diagonalsUpper :: [[a]] -> [[a]]
 diagonalsUpper [] = []
 diagonalsUpper ([]:xs) = xs
-diagonalsUpper xs = DL.zipWith (++) (DL.map ((:[]).DL.head) xs ++ repeat []) ([]:(diagonalsUpper (DL.map DL.tail xs)))
+diagonalsUpper xs = DL.zipWith (++) (DL.map appEmpty xs ++ repeat []) ([]:(diagonalsUpper (DL.map DL.tail xs))) where 
+                                                                                                                appEmpty :: [a] -> [a]
+                                                                                                                appEmpty l = ((DL.head l):[])
 
-
+ 
 -- Funkcja związana z odtwarzaniem tablicy z przekątnych - odtworzenie pojedynczego wiersza
 restoreRow :: [[a]] -> Int -> [a]
 restoreRow list 0 = []
@@ -103,10 +104,10 @@ deleteLasts (x:xs) n = [(DL.init x)] ++ (deleteLasts xs (n-1))
 restoreFromDiagonals :: [[a]] -> Int -> Int -> [[a]]
 restoreFromDiagonals [] k n = []
 restoreFromDiagonals (x:xs) 1 n = [restoreRow (x:xs) n]
-restoreFromDiagonals (x:xs) k n =   let 
-                                        newRow = restoreRow (x:xs) n
-                                        (y:ys) = deleteLasts (x:xs) n
-                                    in [newRow] ++ restoreFromDiagonals ys (k-1) n
+restoreFromDiagonals (x:xs) k n =   do 
+                                       let newRow = restoreRow (x:xs) n
+                                       let (y:ys) = deleteLasts (x:xs) n
+                                       [newRow] ++ restoreFromDiagonals ys (k-1) n
                             
 
 
@@ -114,7 +115,7 @@ restoreFromDiagonals (x:xs) k n =   let
 lookForSinleWordInSingleRow :: [(Char, Bool)] -> String -> ([(Char, Bool)], [String])
 lookForSinleWordInSingleRow row [] = (row, []) --chyba zbędne
 lookForSinleWordInSingleRow row word    | checkWord' row word 0 == -1 = (row, [word])
-										| otherwise = ((markWord row {-(fromJust-} (checkWord' row word 0){-)-} (DL.length word)), [])
+                                        | otherwise = ((markWord row {-(fromJust-} (checkWord' row word 0){-)-} (DL.length word)), [])
 
 -- Szukanie słów w pojedynczej linii
 lookForWordsInSingleRow :: ([(Char, Bool)], [String]) -> ([(Char, Bool)], [String])
@@ -136,6 +137,7 @@ equalStrings _ [] = False
 equalStrings [(ch, s)] [w] = (ch == w)
 equalStrings ((ch, s) : ls) (w:ws) = (ch == w) && equalStrings ls ws 
 
+--Sprawdzenie czy wszystkie litery z danego słowa nie zostały wcześniej wykreślone
 alreadyCrossed :: [(Char, Bool)] -> Bool
 alreadyCrossed [] = False
 alreadyCrossed [(ch, s)] = s
@@ -144,15 +146,20 @@ alreadyCrossed ((ch, s) : ls) = s  && alreadyCrossed ls
 -- Poszukiwanie słowa w danej linii
 checkWord' :: [(Char, Bool)] -> String -> Int -> Int
 checkWord' [] _  _= -1
-checkWord' (l:ls) word n	| DL.length word > DL.length (l:ls) = -1
-							| (equalStrings (DL.take (DL.length word) (l:ls)) word) && not(alreadyCrossed (DL.take (DL.length word) (l:ls))) == True = n
-							| otherwise = checkWord' ls word (n+1)
-							
-							
-						
+checkWord' (l:ls) word n    | DL.length word > DL.length (l:ls) = -1
+                            | (equalStrings (DL.take (DL.length word) (l:ls)) word) && not(alreadyCrossed (DL.take (DL.length word) (l:ls))) == True = n
+                            | otherwise = checkWord' ls word (n+1)
+                            
+                            
+                        
 -- Sortowanie lsity słow względem długości
 sortByLength :: [[a]] -> [[a]]
 sortByLength [] = []
 sortByLength (x:xs) = sortByLength (DL.filter (\xs-> DL.length xs < DL.length x ) xs) ++ [x] ++ sortByLength (DL.filter (\xs-> DL.length xs >= DL.length x ) xs)
 
-
+-- Sprawdzenie poprawności wczytanej tablicy
+checkTableIntegrity :: [String] -> Bool
+checkTableIntegrity [] = False
+checkTableIntegrity (x:xs) = let
+                                lengths = map length xs
+                            in (length x) == (maximum lengths) && (length x) == (minimum lengths)

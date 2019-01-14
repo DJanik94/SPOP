@@ -8,14 +8,6 @@ import PuzzleSolver
 
 --SPOP 18Z Dawid Janik, Wojciech Sobczyk
 
-{- TODO:
-- naprawić bug: zawsze szuka tylko pierwszego wystapinia np. dla sampleTable = initializeRows ["ABCABC", "DEFGHXY", "IJKLMN"]
-sampleRow = sampleTable !! 0
-sampleWordList = ["C", "ABCA","XY"] skersli tylko pierwsze wystapienia poszczegolnych słów
-
-- Dodać funkcję sprawdzającą poprawność wczytanej tablicy
--}
-
 
 -- Zbiór mozliwych bledow pliku
 fileError :: IOError -> Bool
@@ -38,7 +30,6 @@ loadAndSolve tableFiLeName wordlistFileName  = catch
                 words <- hGetContents handle
                 putStrLn words
                 hClose handle
-				{-let action = if checkTableIntegrity (lines table) then putStrLn (solve table words) else putStrLn "Zly format tablicy" -}
                 putStrLn (solve table words)
     ) errorHandler
             where
@@ -64,15 +55,11 @@ puzzle = do
                 loadAndSolve path1 path2
                 puzzle
 
-				
-checkTableIntegrity :: [String] -> Bool
-checkTableIntegrity [] = False
-checkTableIntegrity (x:xs) = let
-								lengths = map length xs
-							in (length x) == (maximum lengths) && (length x) == (minimum lengths)
+                
+
                 
 -- TESTY
-sampleInput = ["A", "DE", "IJK", "ABCA", "DEFGH", "IJKLMN", "ABCAB", "DEFG", "IJK", "AB", "D", "IJ"]
+{-sampleInput = ["A", "DE", "IJK", "ABCA", "DEFGH", "IJKLMN", "ABCAB", "DEFG", "IJK", "AB", "D", "IJ"]
 sampleInput1 = ["123456", "789ABC","DEFGHI", "JKMNOP"]
 sampleTable = initializeRows sampleInput
 sampleRow = sampleTable !! 0
@@ -88,6 +75,6 @@ rXX = diagonalsUpper sampleInput
 
 rXXX = reverse rXX
 
-rXXXX = diagonalsUpper rXXX
+rXXXX = diagonalsUpper rXXX-}
 
 
